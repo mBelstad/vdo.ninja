@@ -32,20 +32,7 @@ services:
       - "3478:3478/udp"           # STUN/TURN (UDP)
     restart: unless-stopped
 
-  companion:
-    image: ghcr.io/bitfocus/companion:stable
-    container_name: companion
-    environment:
-      - TZ=UTC
-    volumes:
-      - companion-data:/data
-    ports:
-      - "8000:8000"     # Web UI
-      - "16622:16622"   # Satellite TCP (optional)
-    restart: unless-stopped
-
 volumes:
   mediamtx-recordings:
-  companion-data:
 
 
