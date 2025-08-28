@@ -2,12 +2,13 @@ version: "3.8"
 
 services:
   vdoninja:
-    image: caddy:alpine@sha256:a4180db0805b3725ddf936d2e6290553745c7339c003565da717ee612fd8a888
-    command: ["caddy", "file-server", "--listen", ":80", "--root", "/usr/share/caddy"]
-    volumes:
-      - ./:/usr/share/caddy:ro
+    build:
+      context: .
+      dockerfile: deploy/coolify/Dockerfile.vdoninja
     expose:
       - "80"
+    ports:
+      - "8080:80"
     restart: unless-stopped
 
   mediamtx:
@@ -21,6 +22,7 @@ services:
     expose:
       - "8888"
     ports:
+      - "8088:8888"
       - "8890:8890/udp"           # SRT ingest
       - "20000-20099:20000-20099/udp"  # WebRTC ICE UDP range
     restart: unless-stopped
