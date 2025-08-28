@@ -4,8 +4,8 @@ services:
   vdoninja:
     image: caddy:alpine@sha256:a4180db0805b3725ddf936d2e6290553745c7339c003565da717ee612fd8a888
     volumes:
-      - ./Caddyfile.vdoninja:/etc/caddy/Caddyfile:ro
-      - ../..:/usr/share/caddy:ro
+      - ./deploy/coolify/Caddyfile.vdoninja:/etc/caddy/Caddyfile:ro
+      - ./:/usr/share/caddy:ro
     expose:
       - "80"
     restart: unless-stopped
@@ -14,7 +14,7 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     volumes:
-      - ./mediamtx.yml:/mediamtx.yml:ro
+      - ./deploy/coolify/mediamtx.yml:/mediamtx.yml:ro
       - mediamtx-recordings:/recordings
     expose:
       - "8888"
@@ -27,7 +27,7 @@ services:
     image: instrumentisto/coturn:latest
     container_name: coturn
     volumes:
-      - ./turnserver.conf.sample:/etc/turnserver.conf:ro
+      - ./deploy/coolify/turnserver.conf.sample:/etc/turnserver.conf:ro
     ports:
       - "3478:3478/udp"           # STUN/TURN (UDP)
     restart: unless-stopped
