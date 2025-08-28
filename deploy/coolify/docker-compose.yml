@@ -10,6 +10,8 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+    networks:
+      - coolify
 
   mediamtx:
     image: bluenviron/mediamtx:latest
@@ -26,6 +28,8 @@ services:
       - "8890:8890/udp"           # SRT ingest
       - "20000-20099:20000-20099/udp"  # WebRTC ICE UDP range
     restart: unless-stopped
+    networks:
+      - coolify
 
   coturn:
     image: instrumentisto/coturn:latest
@@ -40,3 +44,6 @@ volumes:
   mediamtx-recordings:
 
 
+networks:
+  coolify:
+    external: true
