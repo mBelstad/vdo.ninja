@@ -1,0 +1,9 @@
+FROM caddy:2.8-alpine
+
+# Copy VDO.Ninja static files into Caddy web root
+COPY . /usr/share/caddy
+
+# Provide a simple Caddyfile that serves static (Coolify can front with its own proxy/certs)
+COPY deploy/coolify/Caddyfile.vdoninja /etc/caddy/Caddyfile
+
+

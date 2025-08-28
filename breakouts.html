@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<title>Breakout Manager</title>
+	<link rel="stylesheet" href="./lineawesome/css/line-awesome.min.css" />
+	<style>
+		:root { --bg:#0e1421; --panel:#141b2b; --accent:#6aab23; --text:#e8eefc; --muted:#9fb2d2; }
+		html,body { height:100%; margin:0; }
+		body { background: linear-gradient(180deg,#121b2e,#0e1421); color:var(--text); font-family: system-ui; padding:12px; }
+		h1 { font-size:18px; margin:0 0 10px 0; }
+		.panel { background:var(--panel); border-radius:10px; padding:12px; }
+		.grid { display:grid; grid-template-columns: 1fr; gap:10px; }
+		.row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+		input,select { width:100%; padding:10px; border-radius:8px; border:1px solid #2a334a; background:#0f1726; color:var(--text); }
+		.btn { background:var(--accent); color:#0b1400; border:0; border-radius:8px; padding:10px 12px; font-weight:600; cursor:pointer; }
+		.table { width:100%; border-collapse: collapse; font-size:14px; }
+		.table th,.table td { border-bottom:1px solid #2a334a; padding:8px; text-align:left; }
+		.copy { background:#334058; color:#e8eefc; border:0; border-radius:6px; padding:6px 8px; cursor:pointer; }
+		.small { font-size:12px; color:var(--muted); }
+	</style>
+</head>
+<body>
+	<h1><i class="las la-columns" style="color:var(--accent)"></i> Breakout Manager</h1>
+	<div class="panel grid">
+		<div class="row">
+			<div>
+				<div class="small">Base room</div>
+				<input id="room" placeholder="eg. ACME-2025" />
+			</div>
+			<div>
+				<div class="small">Password (optional)</div>
+				<input id="pwd" type="password" />
+			</div>
+		</div>
+		<div class="row">
+			<div>
+				<div class="small"># of breakouts</div>
+				<select id="count">
+					<option>2</option>
+					<option selected>4</option>
+					<option>6</option>
+					<option>8</option>
+				</select>
+			</div>
+			<div>
+				<div class="small">Media domain</div>
+				<input id="mediadomain" placeholder="media.itagenten.no" value="media.itagenten.no" />
+			</div>
+		</div>
+		<div>
+			<button class="btn" id="generate">Generate links</button>
+		</div>
+	</div>
+
+	<div class="panel" style="margin-top:10px;">
+		<table class="table" id="links">
+			<thead>
+				<tr><th>Breakout</th><th>Presenter link</th><th>Viewer HLS</th><th>Viewer WHEP</th></tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+		<div class="small">Presenter links join a dedicated VDO.Ninja room (eg. ROOM-1). Mixer can publish each breakout to MediaMTX paths (mixer-1..n) if desired.</div>
+	</div>
+
+	<script>
+		const studio = location.origin + '/';
+		const tbody = document.querySelector('#links tbody');
+		function esc(s){return encodeURIComponent(s)}
+		function build(){
+			const base = document.getElementById('room').value.trim();
+			const pwd = document.getElementById('pwd').value.trim();
+			const n = parseInt(document.getElementById('count').value,10);
+			const media = document.getElementById('mediadomain').value.trim() || 'media.itagenten.no';
+			if (!base){ alert('Enter base room'); return; }
+			tbody.innerHTML = '';
+			for (let i=1;i<=n;i++){
+				const room = `${base}-${i}`;
+				const presenter = new URL(studio);
+				presenter.searchParams.set('room', room);
+				if (pwd) presenter.searchParams.set('password', pwd);
+				const hls = `https://${media}/hls/${esc(room)}/index.m3u8`;
+				const whep = `https://${media}/whep/${esc(room)}`;
+				const tr = document.createElement('tr');
+				tr.innerHTML = `<td>${room}</td>
+				<td><input value="${presenter.toString()}" style="width:100%"/></td>
+				<td><input value="${hls}" style="width:100%"/></td>
+				<td><input value="${whep}" style="width:100%"/></td>`;
+				tbody.appendChild(tr);
+			}
+		}
+		document.getElementById('generate').onclick = build;
+	</script>
+</body>
+</html>
+
+

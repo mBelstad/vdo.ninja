@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Overlay Output</title>
+	<style>
+		html,body{ height:100%; margin:0; }
+		body{ background:#00ff00; /* chroma */ overflow:hidden; }
+		#wrap{ position:relative; width:100%; height:100%; }
+		.lowerthird{ position:absolute; left:4%; bottom:6%; color:#fff; font-family:system-ui; }
+		.lowerthird .box{ background:rgba(0,0,0,.55); padding:10px 14px; border-radius:8px; }
+		.lowerthird .title{ font-weight:800; font-size:3.2vw; line-height:1.1; }
+		.lowerthird .sub{ font-weight:500; font-size:1.6vw; opacity:.9; }
+		.bug{ position:absolute; right:3%; top:3%; }
+		.bug img{ max-width:18vw; max-height:12vh; }
+		.full{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+		.full img, .full iframe{ max-width:100%; max-height:100%; border:0; }
+		@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+		@keyframes fadeOut { from{opacity:1} to{opacity:0} }
+		@keyframes slideUp { from{ transform:translateY(30px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+		@keyframes slideDown { from{ transform:translateY(0); opacity:1 } to{ transform:translateY(30px); opacity:0 } }
+		@keyframes slideLeft { from{ transform:translateX(30px); opacity:0 } to{ transform:translateX(0); opacity:1 } }
+		@keyframes slideRight { from{ transform:translateX(0); opacity:1 } to{ transform:translateX(30px); opacity:0 } }
+	</style>
+</head>
+<body>
+	<div id="wrap"></div>
+	<script>
+		const p = new URLSearchParams(location.search);
+		const chan = p.get('chan') || 'default';
+		const init = {
+			type: p.get('type') || 'lowerthird',
+			title: p.get('title') || '',
+			subtitle: p.get('subtitle') || '',
+			logo: p.get('logo') || '',
+			thirdurl: p.get('thirdurl') || ''
+		};
+		const bgMode = p.get('bg') || 'chroma';
+		let visible = false;
+		const wrap = document.getElementById('wrap');
+
+		function render(state){
+			wrap.innerHTML = '';
+			if (state.type === 'lowerthird'){
+				const d = document.createElement('div'); d.className='lowerthird';
+				if (state.font) d.style.fontFamily = state.font;
+				const box = document.createElement('div'); box.className='box';
+				if (state.primary) box.style.background = state.primary.startsWith('#')? state.primary + 'cc' : state.primary;
+				if (state.padding) box.style.padding = (parseInt(state.padding,10)||10) + 'px';
+				if (state.logo){ const img = document.createElement('img'); img.src = state.logo; img.style.height='2.2vw'; img.style.verticalAlign='middle'; img.style.marginRight='10px'; box.appendChild(img); }
+				const t = document.createElement('div'); t.className='title'; t.textContent = state.title; box.appendChild(t);
+				if (state.subtitle){ const s = document.createElement('div'); s.className='sub'; s.textContent = state.subtitle; box.appendChild(s); }
+				d.appendChild(box); wrap.appendChild(d);
+			} else if (state.type === 'bug'){
+				if (state.logo){ const d = document.createElement('div'); d.className='bug'; const img = document.createElement('img'); img.src = state.logo; d.appendChild(img); wrap.appendChild(d); }
+			} else if (state.type === 'full'){
+				const d = document.createElement('div'); d.className='full';
+				if (state.logo){ const img = document.createElement('img'); img.src = state.logo; d.appendChild(img); }
+				wrap.appendChild(d);
+			} else if (state.type === 'thirdparty'){
+				if (state.thirdurl){ const d = document.createElement('div'); d.className='full'; const f = document.createElement('iframe'); f.src = state.thirdurl; d.appendChild(f); wrap.appendChild(d); }
+			}
+		}
+
+		let current = {...init};
+		render(current);
+		if (bgMode === 'transparent'){
+			document.body.style.background = 'transparent';
+		}
+		if (!visible) document.body.style.opacity = '0';
+
+		const bc = new BroadcastChannel('ov-'+chan);
+		bc.onmessage = (e)=>{
+			const msg = e.data || {};
+			if (msg.cmd === 'show'){
+				visible = true;
+				applyInAnimation(current);
+				document.body.style.transition='opacity 180ms'; document.body.style.opacity = '1';
+				scheduleAutoHide(current);
+			}
+			if (msg.cmd === 'hide'){
+				visible = false;
+				applyOutAnimation(current);
+				setTimeout(()=>{ document.body.style.opacity = '0'; }, 160);
+			}
+			if (msg.cmd === 'update' && msg.data){ current = {...current, ...msg.data}; render(current); if (visible) document.body.style.opacity='1'; }
+		};
+
+		function applyInAnimation(state){
+			const el = wrap.firstElementChild; if (!el) return;
+			const a = state.animIn || 'fade';
+			if (a==='fade') el.style.animation = 'fadeIn 200ms ease-out';
+			if (a==='slide-up') el.style.animation = 'slideUp 220ms ease-out';
+			if (a==='slide-left') el.style.animation = 'slideLeft 220ms ease-out';
+		}
+		function applyOutAnimation(state){
+			const el = wrap.firstElementChild; if (!el) return;
+			const a = state.animOut || 'fade';
+			if (a==='fade') el.style.animation = 'fadeOut 160ms ease-in';
+			if (a==='slide-down') el.style.animation = 'slideDown 160ms ease-in';
+			if (a==='slide-right') el.style.animation = 'slideRight 160ms ease-in';
+		}
+		let hideTimer = null;
+		function scheduleAutoHide(state){
+			if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+			const sec = parseFloat(state.duration||'0');
+			if (sec > 0){ hideTimer = setTimeout(()=>{ const bc = new BroadcastChannel('ov-'+chan); bc.postMessage({cmd:'hide'}); bc.close(); }, sec*1000); }
+		}
+	</script>
+</body>
+</html>
+
+

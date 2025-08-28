@@ -1,0 +1,58 @@
+logLevel: info
+
+# Public listen for HTTP APIs (WHIP/WHEP/HLS)
+rtspDisable: true
+rtmpDisable: true
+hlsAlwaysRemux: true
+
+httpAddress: :8888
+
+webrtc:
+  # expose UDP port range in compose (20000-20099)
+  iceUDPMin: 20000
+  iceUDPMax: 20099
+  # optional STUN/TURN; we add our own TURN below
+  # iceServers can include turn: links, but we rely on local coturn
+
+paths:
+  cam1:
+    # SRT publish with a stream key
+    source: publisher
+    # Optional: require a per-camera publish key (SRT uses ?pass=KEY or ?user=&pass=)
+    # publishPass: CHANGE_ME_CAM1
+    # allow HLS and WHEP playback
+  cam2:
+    source: publisher
+    # publishPass: CHANGE_ME_CAM2
+  cam3:
+    source: publisher
+    # publishPass: CHANGE_ME_CAM3
+  cam4:
+    source: publisher
+    # publishPass: CHANGE_ME_CAM4
+  cam5:
+    source: publisher
+    # publishPass: CHANGE_ME_CAM5
+
+  mixer:
+    # for publishing from VDO.Ninja via WHIP
+    source: publisher
+    # Optional WHIP auth, if enabled in MediaMTX (Basic/Digest). If using tokens, see docs.
+    # publishUser: mixer
+    # publishPass: CHANGE_ME_MIXER
+
+hls:
+  segmentDuration: 2s
+  partDuration: 0.333s
+  # 1080p/720p/540p ladder via fMP4 rendition remux (requires ffmpeg-exec for transcode if upscale/downscale needed)
+
+record:
+  path: /recordings
+  format: mp4
+  enableOnPublisher: true
+  segments: true
+  deleteAfter: 720h   # 30 days
+
+# WHIP/WHEP endpoints are automatically exposed at /whip/<path> and /whep/<path>
+
+

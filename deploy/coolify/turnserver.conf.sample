@@ -1,0 +1,18 @@
+## Minimal TURN config; adjust realm to your domain
+listening-port=3478
+fingerprint
+lt-cred-mech
+realm=itagenten.no
+user=demo:demo
+no-stdout-log
+
+## recommended UDP relay port range
+# min-port=49152
+# max-port=65535
+
+## For TLS on 443 you'd add certs and map ports accordingly
+# tls-listening-port=443
+# cert=/etc/letsencrypt/live/itagenten.no/fullchain.pem
+# pkey=/etc/letsencrypt/live/itagenten.no/privkey.pem
+
+

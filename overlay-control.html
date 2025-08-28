@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<title>Overlay Control</title>
+	<link rel="stylesheet" href="./lineawesome/css/line-awesome.min.css" />
+	<style>
+		:root { --bg:#0e1421; --panel:#141b2b; --accent:#6aab23; --text:#e8eefc; --muted:#9fb2d2; }
+		html,body{ height:100%; margin:0; }
+		body{ background:linear-gradient(180deg,#121b2e,#0e1421); color:var(--text); font-family:system-ui; padding:12px; }
+		h1{ font-size:18px; margin:0 0 10px 0; }
+		.grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+		.panel{ background:var(--panel); border-radius:10px; padding:12px; }
+		label{ display:block; font-size:12px; color:var(--muted); margin:6px 0 4px; }
+		input,select,textarea{ width:100%; padding:10px; border-radius:8px; border:1px solid #2a334a; background:#0f1726; color:var(--text); }
+		.row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+		.btn{ background:var(--accent); color:#0b1400; border:0; border-radius:8px; padding:10px 12px; font-weight:600; cursor:pointer; }
+		.btn.secondary{ background:#334058; color:#e8eefc; }
+		.buttons{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+		.small{ font-size:12px; color:var(--muted); }
+		.list{ margin-top:8px; }
+		.list .item{ background:#0f1726; border:1px solid #2a334a; border-radius:8px; padding:8px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+	</style>
+</head>
+<body>
+	<h1><i class="las la-layer-group" style="color:var(--accent)"></i> Overlay Control</h1>
+	<div class="grid">
+		<div class="panel">
+			<label>Overlay channel (unique per event)</label>
+			<input id="chan" placeholder="eg. ACME-2025-OVERLAY" />
+			<label>Overlay type</label>
+			<select id="type">
+				<option value="lowerthird">Lower Third</option>
+				<option value="bug">Corner Bug</option>
+				<option value="full">Full-screen Graphic</option>
+				<option value="thirdparty">Third-party HTML</option>
+			</select>
+			<label>Background</label>
+			<select id="bg">
+				<option value="chroma" selected>Chroma Green (key in Mixer)</option>
+				<option value="transparent">Transparent (OBS/Browser Source)</option>
+			</select>
+			<div id="fields">
+				<label>Title</label>
+				<input id="title" placeholder="Speaker Name" />
+				<label>Subtitle</label>
+				<input id="subtitle" placeholder="Company / Role" />
+				<label>Logo URL (optional)</label>
+				<input id="logo" placeholder="https://.../logo.png" />
+				<label class="small">For third-party overlays, paste the overlay URL</label>
+				<input id="thirdurl" placeholder="https://overlay-provider/app?id=..." />
+				<label>Theme</label>
+				<div class="row">
+					<select id="theme">
+						<option value="default" selected>Default</option>
+						<option value="brandA">Brand A</option>
+						<option value="brandB">Brand B</option>
+					</select>
+					<input id="primary" type="color" value="#6aab23" />
+				</div>
+				<div class="row">
+					<select id="font">
+						<option value="system-ui" selected>System</option>
+						<option value="Inter,system-ui,Arial">Inter</option>
+						<option value="Roboto,system-ui,Arial">Roboto</option>
+						<option value="Montserrat,system-ui,Arial">Montserrat</option>
+					</select>
+					<input id="accent" type="color" value="#ffffff" />
+				</div>
+				<label>Animation</label>
+				<div class="row">
+					<select id="animIn">
+						<option value="fade">Fade In</option>
+						<option value="slide-up">Slide Up</option>
+						<option value="slide-left">Slide Left</option>
+					</select>
+					<select id="animOut">
+						<option value="fade">Fade Out</option>
+						<option value="slide-down">Slide Down</option>
+						<option value="slide-right">Slide Right</option>
+					</select>
+				</div>
+				<div class="row">
+					<input id="duration" type="number" min="0" step="0.1" value="0" placeholder="Auto-hide after (seconds); 0 = stay" />
+					<input id="padding" type="number" min="0" step="1" value="10" placeholder="Padding (px)" />
+				</div>
+			</div>
+			<div class="buttons">
+				<button class="btn" id="openOutput"><i class="las la-external-link-alt"></i>Open Overlay Output</button>
+				<button class="btn secondary" id="copyOutput"><i class="las la-link"></i>Copy Output URL</button>
+			</div>
+			<div class="buttons">
+				<button class="btn" id="show"><i class="las la-eye"></i>Show</button>
+				<button class="btn secondary" id="hide"><i class="las la-eye-slash"></i>Hide</button>
+				<button class="btn secondary" id="update"><i class="las la-sync"></i>Update</button>
+			</div>
+			<div class="small" style="margin-top:8px;">Tip: Share the Overlay Output tab into the Mixer and apply chroma-key on that source.</div>
+		</div>
+		<div class="panel">
+			<div class="small">Queued Overlays</div>
+			<div class="list" id="queue"></div>
+			<div class="buttons">
+				<button class="btn secondary" id="addToQueue"><i class="las la-plus"></i>Add to queue</button>
+				<button class="btn secondary" id="clearQueue"><i class="las la-trash"></i>Clear</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function val(id){ return document.getElementById(id).value.trim(); }
+		function buildOutputURL(){
+			const u = new URL(location.origin + '/overlay-output.html');
+			u.searchParams.set('chan', val('chan') || 'default');
+			u.searchParams.set('type', val('type'));
+			if (val('title')) u.searchParams.set('title', val('title'));
+			if (val('subtitle')) u.searchParams.set('subtitle', val('subtitle'));
+			if (val('logo')) u.searchParams.set('logo', val('logo'));
+			if (val('thirdurl')) u.searchParams.set('thirdurl', val('thirdurl'));
+			u.searchParams.set('bg', document.getElementById('bg').value || 'chroma');
+			return u;
+		}
+		function bc(){ return new BroadcastChannel('ov-'+(val('chan')||'default')); }
+		function send(msg){ const c = bc(); c.postMessage(msg); c.close(); }
+
+		document.getElementById('openOutput').onclick = ()=> window.open(buildOutputURL(), '_blank');
+		document.getElementById('copyOutput').onclick = ()=> { const u=buildOutputURL().toString(); navigator.clipboard.writeText(u); };
+		document.getElementById('show').onclick = ()=> send({cmd:'show'});
+		document.getElementById('hide').onclick = ()=> send({cmd:'hide'});
+		document.getElementById('update').onclick = ()=> send({cmd:'update', data: collect()});
+
+		function collect(){
+			return {
+				type: val('type'),
+				title: val('title'), subtitle: val('subtitle'), logo: val('logo'), thirdurl: val('thirdurl'),
+				theme: val('theme'), primary: val('primary'), accent: val('accent'), font: val('font'),
+				animIn: val('animIn'), animOut: val('animOut'), duration: parseFloat(val('duration')||'0'), padding: parseInt(val('padding')||'10',10)
+			};
+		}
+		const queue = document.getElementById('queue');
+		document.getElementById('addToQueue').onclick = ()=>{
+			const item = collect();
+			const el = document.createElement('div');
+			el.className = 'item';
+			el.innerHTML = `<span>${item.type}: ${item.title||item.thirdurl||''}</span><span>
+				<button class='btn secondary' data-act='preview'>Preview</button>
+				<button class='btn' data-act='push'>Show</button>
+			</span>`;
+			el.dataset.payload = JSON.stringify(item);
+			queue.appendChild(el);
+		};
+		document.getElementById('clearQueue').onclick = ()=>{ queue.innerHTML=''; };
+		queue.addEventListener('click', (e)=>{
+			if (!(e.target instanceof HTMLElement)) return;
+			const act = e.target.dataset.act; if (!act) return;
+			const payload = JSON.parse(e.target.closest('.item').dataset.payload);
+			if (act==='preview'){ send({cmd:'update', data: payload}); }
+			if (act==='push'){ send({cmd:'update', data: payload}); send({cmd:'show'}); }
+		});
+	</script>
+</body>
+</html>
+
+

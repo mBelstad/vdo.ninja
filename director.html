@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<title>Director Console</title>
+	<link rel="shortcut icon" href="./media/favicon.ico" />
+	<link rel="stylesheet" href="./lineawesome/css/line-awesome.min.css" />
+	<style>
+		:root { --bg:#0e1421; --panel:#141b2b; --accent:#6aab23; --text:#e8eefc; --muted:#9fb2d2; }
+		html,body { height:100%; margin:0; }
+		body {
+			background: linear-gradient(180deg, #121b2e 0%, #0e1421 100%);
+			font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+			color: var(--text);
+			display:flex; flex-direction:column; gap:10px; padding:10px;
+		}
+		.header { display:flex; align-items:center; gap:10px; }
+		.header h1 { font-size:18px; margin:0; color:var(--text); }
+		.container { display:grid; grid-template-columns: 340px 1fr; gap:10px; height: calc(100vh - 50px); }
+		.panel { background:var(--panel); border-radius:10px; padding:14px; overflow:auto; }
+		.controls label { font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
+		.controls input { width:100%; padding:10px; border-radius:8px; border:1px solid #2a334a; background:#0f1726; color:var(--text); }
+		.controls .row { display:grid; grid-template-columns: 1fr; gap:10px; margin-bottom:10px; }
+		.btn { display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border:0; border-radius:8px; cursor:pointer; font-weight:600; color:#0b1400; background:var(--accent); }
+		.btn.secondary { background:#334058; color:#e8eefc; }
+		.btn:disabled { opacity:.6; cursor:not-allowed; }
+		.buttons { display:flex; flex-wrap:wrap; gap:8px; }
+		.note { font-size:12px; color:var(--muted); margin-top:6px; }
+		iframe { width:100%; height:100%; border:0; background:#000; border-radius:10px; }
+		.small { font-size:12px; }
+		.linkbox { display:flex; gap:6px; margin-top:8px; }
+		.linkbox input { flex:1; font-family:monospace; }
+	</style>
+</head>
+<body>
+	<div class="header">
+		<i class="las la-video" style="color:var(--accent);"></i>
+		<h1>Director Console</h1>
+	</div>
+	<div class="container">
+		<div class="panel controls">
+			<div class="row">
+				<label for="room">Room name</label>
+				<input id="room" placeholder="Enter room (auto-generated if empty)" />
+			</div>
+			<div class="row">
+				<label for="pwd">Room password (optional)</label>
+				<input id="pwd" type="password" placeholder="Password (optional)" />
+			</div>
+			<div class="buttons" style="margin:6px 0 12px 0;">
+				<button class="btn" id="openDirector"><i class="las la-chalkboard"></i>Open Director</button>
+				<button class="btn secondary" id="openMixer"><i class="las la-sliders-h"></i>Open Mixer → MediaMTX</button>
+			</div>
+			<div>
+				<div class="small">Guest link</div>
+				<div class="linkbox">
+					<input id="guestLink" readonly />
+					<button class="btn secondary" id="copyGuest">Copy</button>
+				</div>
+				<div class="note">Share with presenters to join the room.</div>
+			</div>
+			<div style="margin-top:12px;">
+				<div class="small">Director link</div>
+				<div class="linkbox">
+					<input id="directorLink" readonly />
+					<button class="btn secondary" id="copyDirector">Copy</button>
+				</div>
+			</div>
+			<div style="margin-top:12px;">
+				<div class="small">Viewer links (from MediaMTX)</div>
+				<div class="linkbox">
+					<input id="hlsLink" readonly />
+					<button class="btn secondary" id="copyHls">Copy HLS</button>
+				</div>
+				<div class="linkbox">
+					<input id="whepLink" readonly />
+					<button class="btn secondary" id="copyWhep">Copy WHEP</button>
+				</div>
+				<div class="note">Mixer publishes to <code>/whip/mixer</code>; viewers use HLS: <code>/hls/mixer/index.m3u8</code> or WHEP: <code>/whep/mixer</code>.</div>
+			</div>
+		</div>
+		<div class="panel" id="stage">
+			<iframe id="stageFrame" allow="camera;microphone;display-capture;autoplay;fullscreen"></iframe>
+		</div>
+	</div>
+
+	<script>
+		const mediaDomainDefault = 'media.itagenten.no';
+		const urlParams = new URLSearchParams(location.search);
+		const mediaDomain = urlParams.get('mediadomain') || mediaDomainDefault;
+        const overlayChan = urlParams.get('overlay') || 'default';
+		const studioOrigin = location.origin; // this static site
+
+		const roomEl = document.getElementById('room');
+		const pwdEl = document.getElementById('pwd');
+		const stageFrame = document.getElementById('stageFrame');
+		const guestLinkEl = document.getElementById('guestLink');
+		const directorLinkEl = document.getElementById('directorLink');
+		const hlsLinkEl = document.getElementById('hlsLink');
+		const whepLinkEl = document.getElementById('whepLink');
+
+		function generateRoom(len = 7){
+			const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+			let out = '';
+			for (let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
+			return out;
+		}
+
+		function updateLinks(){
+			const room = roomEl.value || generateRoom();
+			roomEl.value = room;
+			const pwd = pwdEl.value || '';
+
+			const guest = new URL(studioOrigin + '/');
+			guest.searchParams.set('room', room);
+			if (pwd) guest.searchParams.set('password', pwd);
+
+			const director = new URL(studioOrigin + '/');
+			director.searchParams.set('room', room);
+			director.searchParams.set('director', '');
+			if (pwd) director.searchParams.set('password', pwd);
+
+			guestLinkEl.value = guest.toString();
+			directorLinkEl.value = director.toString();
+
+			hlsLinkEl.value = `https://${mediaDomain}/hls/mixer/index.m3u8`;
+			whepLinkEl.value = `https://${mediaDomain}/whep/mixer`;
+		}
+
+		function copy(el){ el.select(); document.execCommand('copy'); }
+
+		document.getElementById('copyGuest').onclick = () => copy(guestLinkEl);
+		document.getElementById('copyDirector').onclick = () => copy(directorLinkEl);
+		document.getElementById('copyHls').onclick = () => copy(hlsLinkEl);
+		document.getElementById('copyWhep').onclick = () => copy(whepLinkEl);
+
+		document.getElementById('openDirector').onclick = () => {
+			updateLinks();
+			stageFrame.src = directorLinkEl.value + '&cleanoutput';
+		};
+
+		document.getElementById('openMixer').onclick = () => {
+			updateLinks();
+			const room = roomEl.value;
+			const pwd = pwdEl.value || '';
+			const mixer = new URL(studioOrigin + '/mixer');
+			mixer.searchParams.set('room', room);
+			if (pwd) mixer.searchParams.set('password', pwd);
+			mixer.searchParams.set('whippush', `https://${mediaDomain}/whip/mixer`);
+			mixer.searchParams.set('whipoutvideobitrate', '6000');
+			window.open(mixer.toString(), '_blank');
+		};
+
+		roomEl.addEventListener('change', updateLinks);
+		pwdEl.addEventListener('change', updateLinks);
+		updateLinks();
+
+		// Receive chat/messages from VDO.Ninja and map overlay commands to BroadcastChannel
+		window.addEventListener('message', (e) => {
+			if (e.source !== stageFrame.contentWindow) return;
+			const data = e.data || {};
+			// Chat messages surface as gotChat.msg
+			if (data.gotChat && typeof data.gotChat.msg === 'string'){
+				const msg = data.gotChat.msg.trim();
+				if (msg.toLowerCase().startsWith('overlay:')){
+					const payload = msg.substring(8).trim();
+					const bc = new BroadcastChannel('ov-'+overlayChan);
+					if (payload.toLowerCase() === 'show'){
+						bc.postMessage({cmd:'show'});
+						bc.close();
+						return;
+					}
+					if (payload.toLowerCase() === 'hide'){
+						bc.postMessage({cmd:'hide'});
+						bc.close();
+						return;
+					}
+					// key=value pairs, '|' separated; eg title=Alice|subtitle=Host|logo=https://...|show
+					const parts = payload.split('|');
+					const out = {};
+					let doShow = false;
+					for (const p of parts){
+						const [k,v] = p.split('=');
+						if (!k) continue;
+						if (k.toLowerCase() === 'show'){ doShow = true; continue; }
+						if (k && v !== undefined){ out[k.trim()] = v.trim(); }
+					}
+					bc.postMessage({cmd:'update', data: out});
+					if (doShow) bc.postMessage({cmd:'show'});
+					bc.close();
+				}
+			}
+		});
+	</script>
+</body>
+</html>
+
+

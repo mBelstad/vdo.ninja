@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  vdoninja:
+    build:
+      context: ../..
+      dockerfile: deploy/coolify/Dockerfile.vdoninja
+    image: vdoninja-static:latest
+    expose:
+      - "80"
+    restart: unless-stopped
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
+      - mediamtx-recordings:/recordings
+    expose:
+      - "8888"
+    ports:
+      - "8890:8890/udp"           # SRT ingest
+      - "20000-20099:20000-20099/udp"  # WebRTC ICE UDP range
+    restart: unless-stopped
+
+  coturn:
+    image: instrumentisto/coturn:latest
+    container_name: coturn
+    volumes:
+      - ./turnserver.conf.sample:/etc/turnserver.conf:ro
+    ports:
+      - "3478:3478/udp"           # STUN/TURN (UDP)
+    restart: unless-stopped
+
+  companion:
+    image: ghcr.io/bitfocus/companion:latest
+    container_name: companion
+    environment:
+      - TZ=UTC
+    ports:
+      - "8000:8000"     # Web UI
+      - "8888:8888"     # Satellite UDP (optional)
+      - "16622:16622"   # Satellite TCP (optional)
+    restart: unless-stopped
+
+volumes:
+  mediamtx-recordings:
+
+

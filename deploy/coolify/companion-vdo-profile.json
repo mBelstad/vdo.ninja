@@ -1,0 +1,93 @@
+{
+  "name": "VDO Ninja Starter",
+  "version": 1,
+  "panels": [
+    {
+      "id": "page1",
+      "name": "Mixer",
+      "buttons": [
+        {
+          "x": 0,
+          "y": 0,
+          "text": "Grid",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "layout",
+            "options": { "value": "grid" }
+          }
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "text": "Presenter",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "layout",
+            "options": { "value": "presenter" }
+          }
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "text": "Keyframe",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "forceKeyframe",
+            "options": {}
+          }
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "text": "Mic Toggle",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "mic",
+            "options": { "value": "toggle" }
+          }
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "text": "Speaker Toggle",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "speaker",
+            "options": { "value": "toggle" }
+          }
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "text": "Reload",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "reload",
+            "options": {}
+          }
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "text": "Overlay Show",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "sendChat",
+            "options": { "text": "overlay: show" }
+          }
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "text": "Overlay Hide",
+          "action": {
+            "module": "vdo-ninja",
+            "action": "sendChat",
+            "options": { "text": "overlay: hide" }
+          }
+        }
+      ]
+    }
+  ]
+}
+
