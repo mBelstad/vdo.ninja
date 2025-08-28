@@ -1,4 +1,4 @@
-FROM caddy:2.8-alpine
+FROM caddy:alpine@sha256:a4180db0805b3725ddf936d2e6290553745c7339c003565da717ee612fd8a888
 
 # Copy VDO.Ninja static files into Caddy web root
 COPY . /usr/share/caddy

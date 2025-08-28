@@ -2,10 +2,10 @@ version: "3.8"
 
 services:
   vdoninja:
-    build:
-      context: ../..
-      dockerfile: deploy/coolify/Dockerfile.vdoninja
-    image: vdoninja-static:latest
+    image: caddy:2.8-alpine
+    volumes:
+      - ./Caddyfile.vdoninja:/etc/caddy/Caddyfile:ro
+      - ../..:/usr/share/caddy:ro
     expose:
       - "80"
     restart: unless-stopped
