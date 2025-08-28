@@ -15,7 +15,7 @@ Coolify can front this app with its built-in proxy and certificates for `*.itage
 - `Caddyfile.vdoninja`: static file server (Coolify handles HTTPS)
 - `mediamtx.yml`: MediaMTX config (SRT/WHIP/WHEP/HLS/recordings)
 - `turnserver.conf.sample`: sample TURN config
- - Companion (Bitfocus) container is included for Stream Deck control
+- Companion (Bitfocus) container is included for Stream Deck control
 
 ## Domains
 
@@ -58,12 +58,14 @@ In Coolify:
 - For scale (>100 viewers), front `media.itagenten.no/hls` with a CDN (e.g., Cloudflare).
 
 ## Best practices / hardening
+
 - Keep compose images updated (Coolify can auto-redeploy on new tags).
 - Restrict who can access admin iframes (WordPress role/capabilities).
 - Consider enabling per-path auth in `mediamtx.yml` if you later need stream keys.
 - Monitor MediaMTX logs in Coolify; watch host bandwidth/CPU.
 
 ## Stream Deck / Bitfocus Companion
+
 1) Open Companion UI: `http://<server-ip>:8000` (or `https://companion.itagenten.no` if mapped).
 2) In Companion, add the "VDO.Ninja" module.
 3) In your Mixer iframe URL, add `&api=YOUR_SECRET_KEY`.

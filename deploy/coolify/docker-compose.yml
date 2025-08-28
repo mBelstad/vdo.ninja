@@ -33,18 +33,19 @@ services:
     restart: unless-stopped
 
   companion:
-    build:
-      context: https://github.com/bitfocus/companion.git#main
+    image: ghcr.io/bitfocus/companion:stable
     container_name: companion
     environment:
       - TZ=UTC
+    volumes:
+      - companion-data:/data
     ports:
       - "8000:8000"     # Web UI
-      - "8888:8888"     # Satellite UDP (optional)
       - "16622:16622"   # Satellite TCP (optional)
     restart: unless-stopped
 
 volumes:
   mediamtx-recordings:
+  companion-data:
 
 
