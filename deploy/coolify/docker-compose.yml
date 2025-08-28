@@ -3,8 +3,8 @@ version: "3.8"
 services:
   vdoninja:
     image: caddy:alpine@sha256:a4180db0805b3725ddf936d2e6290553745c7339c003565da717ee612fd8a888
+    command: ["caddy", "file-server", "--listen", ":80", "--root", "/usr/share/caddy"]
     volumes:
-      - ./deploy/coolify/Caddyfile.vdoninja:/etc/caddy/Caddyfile:ro
       - ./:/usr/share/caddy:ro
     expose:
       - "80"
