@@ -19,7 +19,7 @@ services:
     volumes:
       - ./deploy/coolify:/config:ro
       - mediamtx-recordings:/recordings
-    command: ["-config", "/config/mediamtx.yml"]
+    command: ["/config/mediamtx.yml"]
     expose:
       - "8888"
     ports:
