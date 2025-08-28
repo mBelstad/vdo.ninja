@@ -17,9 +17,9 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     volumes:
-      - ./deploy/coolify/mediamtx.yml:/mediamtx.yml:ro
+      - ./deploy/coolify:/config:ro
       - mediamtx-recordings:/recordings
-    command: ["-config", "/mediamtx.yml"]
+    command: ["-config", "/config/mediamtx.yml"]
     expose:
       - "8888"
     ports:
